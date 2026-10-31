@@ -64,10 +64,11 @@ The WebSocket endpoint will be accessible at:
 
 ## WebSocket Events
 
-- **Receive from client**: Raw audio binary (`audio/webm`)
+- **Receive from client**: A JSON config message, then raw audio binary (`audio/webm`); the client may send `{"type":"end"}` to end the session.
 - **Send to client**:
-  - `{"type": "status", "state": "thinking" | "listening"}`
-  - `{"type": "transcript", "text": "..."}`
-  - `{"type": "reply", "text": "..."}`
-  - `{"type": "error", "message": "..."}`
-  - Binary bytes (`audio/wav`) of the generated speech reply
+  - `{"type":"ready"}` when the interview is prepared
+  - `{"type":"status","state":"thinking" | "listening"}`
+  - `{"type":"transcript","text":"..."}` for recognized candidate speech
+  - `{"type":"reply","text":"..."}` followed by binary bytes (`audio/wav`) for the spoken interviewer response. Only the current spoken response is sent; future questions are not exposed in advance.
+  - `{"type":"ended",...}` with the spoken transcript so far; no progress updates are sent
+  - `{"type":"error","message":"..."}`

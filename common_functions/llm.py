@@ -1,17 +1,30 @@
-from config import setting
 import httpx
+from config import setting
 from common_functions.http_utils import check
 
-async def llm(client: httpx.AsyncClient, history: list) -> str:
+
+async def _chat(client: httpx.AsyncClient, messages: list, **extra) -> str:
     r = await client.post(
         f"{setting.BASE_URL}/chat/completions",
         headers=setting.json_headers,
         json={
             "model": setting.LLM,
-            "messages": history,
+            "messages": messages,
             "reasoning_effort": "low",
-            "max_completion_tokens": 1024,
+            "max_completion_tokens": 2048,  # reasoning tokens count against this
+            **extra,
         },
     )
     check(r, "llm")
-    return r.json()["choices"][0]["message"]["content"].strip()
+    content = r.json()["choices"][0]["message"]["content"] or ""
+    return content.strip()
+
+
+async def llm(client: httpx.AsyncClient, messages: list) -> str:
+    """Plain text reply."""
+    return await _chat(client, messages)
+
+
+async def llm_json(client: httpx.AsyncClient, messages: list) -> str:
+    """JSON-mode reply (the prompt must mention JSON). Returns the raw string."""
+    return await _chat(client, messages, response_format={"type": "json_object"})
